@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const conectarDB = require('./config/database'); // Asegúrate de que este es el path correcto
+const conectarDB = require('./Config/database'); 
 
 // Importar rutas
 const productosRoutes = require('./rutas/RuthProductos');
