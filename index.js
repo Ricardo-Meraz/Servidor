@@ -15,6 +15,7 @@ app.use(cors());
 // Importar rutas
 const productosRoutes = require('./rutas/RuthProductos');
 const usuariosRoutes = require('./rutas/RuthUsuarios');
+const misionVisionRoutes = require('./rutas/RuthMisionVision'); // ✅ Nueva ruta añadida
 
 // Ruta de prueba
 app.get('/', (req, res) => {
@@ -24,6 +25,7 @@ app.get('/', (req, res) => {
 // Usar rutas
 app.use('/productos', productosRoutes);
 app.use('/usuarios', usuariosRoutes);
+app.use('/mision-vision', misionVisionRoutes); // ✅ Se agregó esta nueva ruta
 
 // Si estás corriendo localmente, inicia el servidor normalmente
 if (process.env.NODE_ENV !== 'production') {
