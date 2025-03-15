@@ -16,7 +16,7 @@ app.use(cors());
 const productosRoutes = require('./rutas/RuthProductos');
 const usuariosRoutes = require('./rutas/RuthUsuarios');
 const misionVisionRoutes = require('./rutas/RuthMisionVision'); // ✅ Ruta de Misión y Visión
-const historialAntecedentesRoutes = require('./rutas/RuthHistorial-Antecedentes'); 
+const historialAntecedentesRoutes = require("./rutas/RuthHistorialAntecedentes"); // ✅ Nueva ruta
 
 // Ruta de prueba
 app.get('/', (req, res) => {
@@ -27,7 +27,7 @@ app.get('/', (req, res) => {
 app.use('/productos', productosRoutes);
 app.use('/usuarios', usuariosRoutes);
 app.use('/mision-vision', misionVisionRoutes);
-app.use('/historial-antecedentes', historialAntecedentesRoutes);
+app.use("/historial-antecedentes", historialAntecedentesRoutes);
 
 // Si estás corriendo localmente, inicia el servidor normalmente
 if (process.env.NODE_ENV !== 'production') {

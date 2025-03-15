@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const HistorialAntecedentes = require("../Models/ModelHistorialAntecedentes");
+const HistorialAntecedentes = require("../Models/ModelHistorial-Antecedentes");
 
 // 📌 Obtener los datos de historial y antecedentes
 router.get("/ver", async (req, res) => {
