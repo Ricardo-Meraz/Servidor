@@ -1,75 +1,60 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const HistorialAntecedentes = require('../Models/ModelHistorial-Antecedentes');
+const HistorialAntecedentes = require("../Models/ModelHistorialAntecedentes");
 
-router.get('/ver', async (req, res) => {
+// 📌 Obtener los datos de historial y antecedentes
+router.get("/ver", async (req, res) => {
     try {
-        // Filtrar solo documentos que contengan "historial" y "antecedentes"
-        const datos = await HistorialAntecedentes.findOne(
-            { historial: { $exists: true }, antecedentes: { $exists: true } },
-            { _id: 1, historial: 1, antecedentes: 1 } // Solo traer estos campos
-        );
-
+        const datos = await HistorialAntecedentes.findOne();
         if (!datos) {
-            return res.status(404).json({ mensaje: 'No hay información registrada.' });
+            return res.status(404).json({ mensaje: "No hay información registrada." });
         }
         res.json(datos);
     } catch (error) {
-        res.status(500).json({ mensaje: 'Error al obtener la información.', error });
+        res.status(500).json({ mensaje: "Error al obtener la información.", error });
     }
 });
 
-
-// ✅ Agregar Historial y Antecedentes
-router.post('/agregar', async (req, res) => {
+// 📌 Agregar nuevo historial y antecedentes
+router.post("/agregar", async (req, res) => {
     try {
         const { historial, antecedentes } = req.body;
-
-        if (!historial || !antecedentes) {
-            return res.status(400).json({ mensaje: "Todos los campos son obligatorios." });
-        }
-
         const nuevoRegistro = new HistorialAntecedentes({ historial, antecedentes });
         await nuevoRegistro.save();
-        res.json({ mensaje: "Historial y Antecedentes guardados correctamente." });
-
+        res.json({ mensaje: "Registro agregado exitosamente." });
     } catch (error) {
-        res.status(500).json({ mensaje: "Error al guardar los datos.", error });
+        res.status(500).json({ mensaje: "Error al agregar la información.", error });
     }
 });
 
-// 🔄 Editar Historial y Antecedentes
-router.put('/editar/:id', async (req, res) => {
+// 📌 Actualizar historial y antecedentes
+router.put("/actualizar/:id", async (req, res) => {
     try {
         const { historial, antecedentes } = req.body;
-
-        const datosActualizados = await HistorialAntecedentes.findByIdAndUpdate(
-            req.params.id, 
+        const actualizado = await HistorialAntecedentes.findByIdAndUpdate(
+            req.params.id,
             { historial, antecedentes },
             { new: true }
         );
-
-        if (!datosActualizados) {
-            return res.status(404).json({ mensaje: "No se encontró el registro." });
+        if (!actualizado) {
+            return res.status(404).json({ mensaje: "Registro no encontrado." });
         }
-
-        res.json({ mensaje: "Información actualizada correctamente.", datosActualizados });
-
+        res.json({ mensaje: "Actualizado correctamente.", actualizado });
     } catch (error) {
-        res.status(500).json({ mensaje: "Error al actualizar.", error });
+        res.status(500).json({ mensaje: "Error al actualizar la información.", error });
     }
 });
 
-// ❌ Eliminar Historial y Antecedentes
-router.delete('/eliminar/:id', async (req, res) => {
+// 📌 Eliminar historial y antecedentes
+router.delete("/eliminar/:id", async (req, res) => {
     try {
         const eliminado = await HistorialAntecedentes.findByIdAndDelete(req.params.id);
         if (!eliminado) {
-            return res.status(404).json({ mensaje: "No se encontró el registro para eliminar." });
+            return res.status(404).json({ mensaje: "Registro no encontrado." });
         }
-        res.json({ mensaje: "Registro eliminado correctamente." });
+        res.json({ mensaje: "Eliminado correctamente." });
     } catch (error) {
-        res.status(500).json({ mensaje: "Error al eliminar.", error });
+        res.status(500).json({ mensaje: "Error al eliminar la información.", error });
     }
 });
 
