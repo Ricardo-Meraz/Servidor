@@ -16,7 +16,7 @@ app.use(cors());
 const productosRoutes = require('./rutas/RuthProductos');
 const usuariosRoutes = require('./rutas/RuthUsuarios');
 const misionVisionRoutes = require('./rutas/RuthMisionVision'); // ✅ Ruta de Misión y Visión
-const historialAntecedentesRoutes = require("./rutas/RuthHistorialAntecedentes"); // ✅ Nueva ruta
+const historialAntecedentesRoutes = require("./rutas/RuthHistorial-Antecedentes"); // ✅ Nueva ruta
 
 // Ruta de prueba
 app.get('/', (req, res) => {
