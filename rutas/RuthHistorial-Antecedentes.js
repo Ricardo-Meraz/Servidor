@@ -2,10 +2,14 @@ const express = require('express');
 const router = express.Router();
 const HistorialAntecedentes = require('../Models/ModelHistorial-Antecedentes');
 
-// 🔍 Ver Historial y Antecedentes
 router.get('/ver', async (req, res) => {
     try {
-        const datos = await HistorialAntecedentes.findOne();
+        // Filtrar solo documentos que contengan "historial" y "antecedentes"
+        const datos = await HistorialAntecedentes.findOne(
+            { historial: { $exists: true }, antecedentes: { $exists: true } },
+            { _id: 1, historial: 1, antecedentes: 1 } // Solo traer estos campos
+        );
+
         if (!datos) {
             return res.status(404).json({ mensaje: 'No hay información registrada.' });
         }
@@ -14,6 +18,7 @@ router.get('/ver', async (req, res) => {
         res.status(500).json({ mensaje: 'Error al obtener la información.', error });
     }
 });
+
 
 // ✅ Agregar Historial y Antecedentes
 router.post('/agregar', async (req, res) => {
