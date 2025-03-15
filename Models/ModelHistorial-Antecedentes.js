@@ -1,14 +1,8 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const HistorialAntecedentesSchema = new mongoose.Schema({
-  historial: {
-    type: String,
-    required: true
-  },
-  antecedentes: {
-    type: String,
-    required: true
-  }
-}, { collection: "Nosotros" }); // Asegura que use la colección correcta
+    historial: { type: String, required: true },
+    antecedentes: { type: String, required: true }
+}, { collection: 'Nosotros' });
 
-module.exports = mongoose.model("HistorialAntecedentes", HistorialAntecedentesSchema);
+module.exports = mongoose.model('HistorialAntecedentes', HistorialAntecedentesSchema);
