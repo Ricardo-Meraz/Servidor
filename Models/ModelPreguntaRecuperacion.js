@@ -4,6 +4,7 @@ const PreguntaRecuperacionSchema = new mongoose.Schema({
     pregunta: { type: String, required: true }
 });
 
-const PreguntaRecuperacion = mongoose.model('PreguntaRecuperacion', PreguntaRecuperacionSchema);
+// 📌 Asegúrate de que el modelo coincida con la colección
+const PreguntaRecuperacion = mongoose.model('pregunta-recuperacion', PreguntaRecuperacionSchema, 'pregunta-recuperacion');
 
 module.exports = PreguntaRecuperacion;
