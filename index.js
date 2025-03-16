@@ -17,7 +17,7 @@ const productosRoutes = require('./rutas/RuthProductos');
 const usuariosRoutes = require('./rutas/RuthUsuarios');
 const misionVisionRoutes = require('./rutas/RuthMisionVision'); // ✅ Ruta de Misión y Visión
 const historialAntecedentesRoutes = require("./rutas/RuthHistorial-Antecedentes"); // ✅ Nueva ruta
-const preguntaRecuperacionRoutes = require("./rutas/RuthPreguntaRecuperacion");
+
 
 // Ruta de prueba
 app.get('/', (req, res) => {
@@ -29,7 +29,7 @@ app.use('/productos', productosRoutes);
 app.use('/usuarios', usuariosRoutes);
 app.use('/mision-vision', misionVisionRoutes);
 app.use("/historial-antecedentes", historialAntecedentesRoutes);
-app.use("/pregunta-recuperacion", preguntaRecuperacionRoutes); 
+
 
 // Si estás corriendo localmente, inicia el servidor normalmente
 if (process.env.NODE_ENV !== 'production') {
