@@ -120,6 +120,9 @@ router.put('/:id', async (req, res) => {
         // Copiamos los datos que se quieren actualizar
         const updateData = { ...req.body };
 
+        // Depuración: Verifica el contenido de updateData (incluyendo "rol")
+        console.log("🔄 Datos a actualizar:", updateData);
+
         // Si se actualiza la contraseña, se vuelve a hashearla
         if (updateData.password) {
             const salt = await bcrypt.genSalt(10);
