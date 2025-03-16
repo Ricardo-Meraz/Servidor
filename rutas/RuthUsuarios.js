@@ -96,6 +96,19 @@ router.post('/login', async (req, res) => {
 });
 
 // ==========================
+// Ruta para ver (listar) los usuarios
+// ==========================
+router.get('/', async (req, res) => {
+    try {
+        const usuarios = await Usuario.find();
+        res.status(200).json(usuarios);
+    } catch (error) {
+        console.error("❌ Error al obtener usuarios:", error);
+        res.status(500).json({ mensaje: "Error en el servidor", error });
+    }
+});
+
+// ==========================
 // Ruta para actualizar (editar) un usuario
 // ==========================
 router.put('/:id', async (req, res) => {
