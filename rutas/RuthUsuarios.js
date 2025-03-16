@@ -2,21 +2,20 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Usuario = require('../Models/ModelUsuario');
-const PreguntaRecuperacion = require('../Models/ModelPreguntaRecuperacion'); // ✅ Importar modelo de preguntas
 
 const router = express.Router();
 
-// Obtener todos los usuarios con su pregunta referenciada
+// Obtener todos los usuarios
 router.get('/', async (req, res) => {
     try {
-        const usuarios = await Usuario.find().populate('pregunta_recuperacion'); // ✅ Ahora referencia la pregunta correctamente
+        const usuarios = await Usuario.find();
         res.json(usuarios);
     } catch (error) {
         res.status(500).json({ mensaje: 'Error al obtener los usuarios', error });
     }
 });
 
-// Registrar un usuario con pregunta de recuperación referenciada
+// Registrar un usuario
 router.post('/registro', async (req, res) => {
     try {
         const { nombre, apellidoP, apellidoM, telefono, email, password, sexo, edad, pregunta_recuperacion, respuesta_recuperacion } = req.body;
@@ -25,34 +24,24 @@ router.post('/registro', async (req, res) => {
             return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
         }
 
-        // Verificar si la pregunta de recuperación existe en la base de datos
-        const preguntaExiste = await PreguntaRecuperacion.findById(pregunta_recuperacion);
-        if (!preguntaExiste) {
-            return res.status(400).json({ mensaje: 'La pregunta de recuperación no es válida' });
-        }
-
-        // Verificar si el email ya está registrado
         const usuarioExistente = await Usuario.findOne({ email });
         if (usuarioExistente) {
             return res.status(400).json({ mensaje: 'El correo ya está registrado' });
         }
 
-        // Hash de la contraseña
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        // Crear nuevo usuario con la referencia correcta
         const nuevoUsuario = new Usuario({
             nombre,
             apellidoP,
             apellidoM,
             telefono,
             email,
-            contraseña: passwordHash,
+            contraseña: passwordHash, // Se mantiene como "contraseña" en la base de datos
             sexo,
             edad,
-            pregunta_recuperacion, // 🔥 Guardamos el ObjectId de la pregunta
-            respuesta_recuperacion,
+            pregunta_recuperacion: { pre_id: 1, respuesta: respuesta_recuperacion },
             rol: "Cliente"
         });
 
@@ -67,14 +56,17 @@ router.post('/registro', async (req, res) => {
 // Iniciar sesión
 router.post('/login', async (req, res) => {
     try {
+        console.log(req.body); // 👀 Ver qué datos recibe el backend
+
         const { email, password } = req.body;
-        const usuario = await Usuario.findOne({ email }).populate('pregunta_recuperacion'); // ✅ Traer la pregunta referenciada
+
+        const usuario = await Usuario.findOne({ email });
 
         if (!usuario) {
             return res.status(404).json({ mensaje: 'Usuario no encontrado' });
         }
 
-        const esValida = await bcrypt.compare(password, usuario.contraseña);
+        const esValida = await bcrypt.compare(password, usuario.contraseña); // ✅ Corrección aquí
         if (!esValida) {
             return res.status(400).json({ mensaje: 'Contraseña incorrecta' });
         }
