@@ -15,19 +15,20 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Registrar un usuario
 router.post('/registro', async (req, res) => {
     try {
-        console.log("Datos recibidos:", req.body); // 🔥 Ver qué datos llegan al backend
+        console.log("📥 Datos recibidos en el backend:", req.body); // 👀 Verificar qué datos llegan
 
         const { nombre, apellidoP, apellidoM, telefono, email, password, sexo, edad, pregunta_recuperacion, respuesta_recuperacion } = req.body;
 
         if (!nombre || !apellidoP || !telefono || !email || !password || !sexo || !edad || !pregunta_recuperacion || !respuesta_recuperacion) {
+            console.log("❌ Campos faltantes:", { nombre, apellidoP, telefono, email, password, sexo, edad, pregunta_recuperacion, respuesta_recuperacion });
             return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
         }
 
         const usuarioExistente = await Usuario.findOne({ email });
         if (usuarioExistente) {
+            console.log("⚠️ Correo ya registrado:", email);
             return res.status(400).json({ mensaje: 'El correo ya está registrado' });
         }
 
@@ -43,14 +44,16 @@ router.post('/registro', async (req, res) => {
             contraseña: passwordHash,
             sexo,
             edad,
-            pregunta_recuperacion: { pre_id: pregunta_recuperacion, respuesta: respuesta_recuperacion }, // 🔥 Guarda correctamente
+            pregunta_recuperacion: { pre_id: pregunta_recuperacion, respuesta: respuesta_recuperacion },
             rol: "Cliente"
         });
 
         await nuevoUsuario.save();
+        console.log("✅ Usuario registrado exitosamente");
         res.status(201).json({ mensaje: 'Usuario registrado exitosamente' });
 
     } catch (error) {
+        console.error("🔥 Error en el servidor:", error);
         res.status(500).json({ mensaje: 'Error en el servidor', error });
     }
 });
