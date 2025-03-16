@@ -6,42 +6,59 @@ const Usuario = require('../Models/ModelUsuario');
 
 const router = express.Router();
 
-// 🔥 Ruta para registrar un usuario
+// Ruta para registrar un usuario
 router.post('/registro', async (req, res) => {
     try {
-        console.log("📥 Datos recibidos en el backend:", req.body); // ✅ Depuración
+        console.log("📥 Datos recibidos en el backend:", req.body);
 
-        const { nombre, apellidoP, apellidoM, telefono, email, password, sexo, edad, pregunta_recuperacion, respuesta_recuperacion } = req.body;
+        // Extraemos los campos tal como se envían desde el front
+        const { 
+            nombre, 
+            apellidoP, 
+            apellidoM, 
+            telefono, 
+            email, 
+            password, 
+            sexo, 
+            edad, 
+            pregunta_recuperacion, 
+            respuesta_recuperacion 
+        } = req.body;
 
-        if (!nombre || !apellidoP || !telefono || !email || !password || !sexo || !edad || !pregunta_recuperacion || !respuesta_recuperacion) {
+        // Validación de campos
+        if (!nombre || !apellidoP || !telefono || !email || !password || 
+            !sexo || !edad || !pregunta_recuperacion || !respuesta_recuperacion) {
             return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
         }
 
-        // ✅ Convertimos `pre_id` a un ObjectId válido
+        // Validar que pregunta_recuperacion sea un ObjectId válido
         if (!mongoose.Types.ObjectId.isValid(pregunta_recuperacion)) {
             return res.status(400).json({ mensaje: 'ID de pregunta inválido' });
         }
         const pre_id_ObjectId = new mongoose.Types.ObjectId(pregunta_recuperacion);
 
+        // Verificar si el usuario ya existe
         const usuarioExistente = await Usuario.findOne({ email });
         if (usuarioExistente) {
             return res.status(400).json({ mensaje: 'El correo ya está registrado' });
         }
 
+        // Hashear contraseña
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
+        // Crear nuevo usuario con el formato del Schema
         const nuevoUsuario = new Usuario({
             nombre,
             apellidoP,
             apellidoM,
             telefono,
             email,
-            contraseña: passwordHash,
+            contraseña: passwordHash, // Se almacena en la propiedad 'contraseña'
             sexo,
             edad,
             pregunta_recuperacion: {
-                pre_id: pre_id_ObjectId, // ✅ Ahora es un ObjectId válido
+                pre_id: pre_id_ObjectId, 
                 respuesta: respuesta_recuperacion
             },
             rol: "Cliente"
