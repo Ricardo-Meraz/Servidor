@@ -8,7 +8,7 @@ const router = express.Router();
 // Obtener todos los usuarios
 router.get('/', async (req, res) => {
     try {
-        const usuarios = await Usuario.find();
+        const usuarios = await Usuario.find().populate('pregunta_recuperacion.pre_id'); // 🔥 Obtiene detalles de la pregunta
         res.json(usuarios);
     } catch (error) {
         res.status(500).json({ mensaje: 'Error al obtener los usuarios', error });
@@ -18,6 +18,8 @@ router.get('/', async (req, res) => {
 // Registrar un usuario
 router.post('/registro', async (req, res) => {
     try {
+        console.log("Datos recibidos:", req.body); // 🔥 Ver qué datos llegan al backend
+
         const { nombre, apellidoP, apellidoM, telefono, email, password, sexo, edad, pregunta_recuperacion, respuesta_recuperacion } = req.body;
 
         if (!nombre || !apellidoP || !telefono || !email || !password || !sexo || !edad || !pregunta_recuperacion || !respuesta_recuperacion) {
@@ -38,10 +40,10 @@ router.post('/registro', async (req, res) => {
             apellidoM,
             telefono,
             email,
-            contraseña: passwordHash, // Se mantiene como "contraseña" en la base de datos
+            contraseña: passwordHash,
             sexo,
             edad,
-            pregunta_recuperacion: { pre_id: 1, respuesta: respuesta_recuperacion },
+            pregunta_recuperacion: { pre_id: pregunta_recuperacion, respuesta: respuesta_recuperacion }, // 🔥 Guarda correctamente
             rol: "Cliente"
         });
 
@@ -56,17 +58,14 @@ router.post('/registro', async (req, res) => {
 // Iniciar sesión
 router.post('/login', async (req, res) => {
     try {
-        console.log(req.body); // 👀 Ver qué datos recibe el backend
-
         const { email, password } = req.body;
-
         const usuario = await Usuario.findOne({ email });
 
         if (!usuario) {
             return res.status(404).json({ mensaje: 'Usuario no encontrado' });
         }
 
-        const esValida = await bcrypt.compare(password, usuario.contraseña); // ✅ Corrección aquí
+        const esValida = await bcrypt.compare(password, usuario.contraseña);
         if (!esValida) {
             return res.status(400).json({ mensaje: 'Contraseña incorrecta' });
         }

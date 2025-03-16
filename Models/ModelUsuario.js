@@ -10,7 +10,7 @@ const UsuarioSchema = new mongoose.Schema({
   sexo: { type: String, enum: ['masculino', 'femenino'], required: true },
   edad: { type: Number, required: true },
   pregunta_recuperacion: {
-    pre_id: { type: Number, required: true },
+    pre_id: { type: mongoose.Schema.Types.ObjectId, ref: 'PreguntaRecuperacion', required: true }, // 🔥 Referencia a la colección
     respuesta: { type: String, required: true }
   },
   rol: { type: String, enum: ['Cliente', 'Admin'], default: 'Cliente' }
