@@ -204,39 +204,30 @@ router.post('/recuperar-pregunta', async (req, res) => {
   }
 });
 
-router.post('/recuperar-contraseña', async (req, res) => {
+router.post('/cambiar-contraseña', async (req, res) => {
   try {
-    const { email, respuesta, nuevaContraseña } = req.body;
-    if (!email || !respuesta || !nuevaContraseña) {
-      return res.status(400).json({ mensaje: 'Todos los campos son obligatorios.' });
+    const { email, nuevaContraseña } = req.body;
+    if (!email || !nuevaContraseña) {
+      return res.status(400).json({ mensaje: 'Email y nueva contraseña son obligatorios.' });
     }
-
-    // Buscar al usuario por correo
+    // Buscar al usuario
     const usuario = await Usuario.findOne({ email });
     if (!usuario) {
       return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
     }
-
-    // Verificar la respuesta secreta de forma tolerante (sin mayúsculas/minúsculas y espacios)
-    if (
-      usuario.pregunta_recuperacion.respuesta.trim().toLowerCase() !== 
-      respuesta.trim().toLowerCase()
-    ) {
-      return res.status(400).json({ mensaje: 'Respuesta incorrecta.' });
-    }
-
     // Hashear la nueva contraseña
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(nuevaContraseña, salt);
     usuario.contraseña = passwordHash;
-
+    // Guardar el usuario con la contraseña actualizada
     await usuario.save();
     res.status(200).json({ success: true, mensaje: 'Contraseña actualizada exitosamente.' });
   } catch (error) {
-    console.error("❌ Error en recuperar-contraseña:", error);
+    console.error("❌ Error en cambiar-contraseña:", error);
     res.status(500).json({ mensaje: 'Error al actualizar la contraseña.', error });
   }
 });
+
 router.post('/verificar-respuesta', async (req, res) => {
   try {
     const { email, respuesta } = req.body;
