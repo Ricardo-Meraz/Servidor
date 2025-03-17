@@ -204,7 +204,6 @@ router.post('/recuperar-pregunta', async (req, res) => {
   }
 });
 
-// Endpoint para recuperar (actualizar) la contraseña
 router.post('/recuperar-contraseña', async (req, res) => {
   try {
     const { email, respuesta, nuevaContraseña } = req.body;
@@ -212,24 +211,26 @@ router.post('/recuperar-contraseña', async (req, res) => {
       return res.status(400).json({ mensaje: 'Todos los campos son obligatorios.' });
     }
 
-    // Buscar al usuario
+    // Buscar al usuario por correo
     const usuario = await Usuario.findOne({ email });
     if (!usuario) {
       return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
     }
 
-    // Verificar la respuesta secreta
-    // Se compara de forma exacta; podrías agregar lógica adicional (por ejemplo, convertir a minúsculas)
-    if (usuario.pregunta_recuperacion.respuesta !== respuesta) {
+    // Verificar la respuesta secreta de forma tolerante (sin mayúsculas/minúsculas y espacios)
+    if (
+      usuario.pregunta_recuperacion.respuesta.trim().toLowerCase() !== 
+      respuesta.trim().toLowerCase()
+    ) {
       return res.status(400).json({ mensaje: 'Respuesta incorrecta.' });
     }
 
-    // Hashear la nueva contraseña y actualizar
+    // Hashear la nueva contraseña
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(nuevaContraseña, salt);
     usuario.contraseña = passwordHash;
-    await usuario.save();
 
+    await usuario.save();
     res.status(200).json({ success: true, mensaje: 'Contraseña actualizada exitosamente.' });
   } catch (error) {
     console.error("❌ Error en recuperar-contraseña:", error);
