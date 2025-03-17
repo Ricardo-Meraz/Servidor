@@ -179,4 +179,62 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+
+// Endpoint para recuperar la pregunta secreta según el email del usuario
+router.post('/recuperar-pregunta', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El correo es obligatorio.' });
+    }
+    // Buscar el usuario y popular la pregunta secreta
+    const usuario = await Usuario.findOne({ email })
+      .populate('pregunta_recuperacion.pre_id');
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+    }
+    const pregunta = usuario.pregunta_recuperacion.pre_id?.pregunta;
+    if (!pregunta) {
+      return res.status(404).json({ mensaje: 'No se encontró la pregunta secreta.' });
+    }
+    res.status(200).json({ pregunta });
+  } catch (error) {
+    console.error("❌ Error en recuperar-pregunta:", error);
+    res.status(500).json({ mensaje: 'Error al obtener la pregunta secreta.', error });
+  }
+});
+
+// Endpoint para recuperar (actualizar) la contraseña
+router.post('/recuperar-contraseña', async (req, res) => {
+  try {
+    const { email, respuesta, nuevaContraseña } = req.body;
+    if (!email || !respuesta || !nuevaContraseña) {
+      return res.status(400).json({ mensaje: 'Todos los campos son obligatorios.' });
+    }
+
+    // Buscar al usuario
+    const usuario = await Usuario.findOne({ email });
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+    }
+
+    // Verificar la respuesta secreta
+    // Se compara de forma exacta; podrías agregar lógica adicional (por ejemplo, convertir a minúsculas)
+    if (usuario.pregunta_recuperacion.respuesta !== respuesta) {
+      return res.status(400).json({ mensaje: 'Respuesta incorrecta.' });
+    }
+
+    // Hashear la nueva contraseña y actualizar
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(nuevaContraseña, salt);
+    usuario.contraseña = passwordHash;
+    await usuario.save();
+
+    res.status(200).json({ success: true, mensaje: 'Contraseña actualizada exitosamente.' });
+  } catch (error) {
+    console.error("❌ Error en recuperar-contraseña:", error);
+    res.status(500).json({ mensaje: 'Error al actualizar la contraseña.', error });
+  }
+});
+
 module.exports = router;
