@@ -237,5 +237,33 @@ router.post('/recuperar-contraseña', async (req, res) => {
     res.status(500).json({ mensaje: 'Error al actualizar la contraseña.', error });
   }
 });
+router.post('/verificar-respuesta', async (req, res) => {
+  try {
+    const { email, respuesta } = req.body;
+    if (!email || !respuesta) {
+      return res.status(400).json({ mensaje: 'Todos los campos son obligatorios.' });
+    }
+
+    // Buscar al usuario por email
+    const usuario = await Usuario.findOne({ email });
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+    }
+
+    // Comparar la respuesta almacenada con la que envía el usuario, de forma tolerante
+    if (
+      usuario.pregunta_recuperacion.respuesta.trim().toLowerCase() !==
+      respuesta.trim().toLowerCase()
+    ) {
+      return res.status(400).json({ mensaje: 'Respuesta incorrecta.' });
+    }
+
+    res.status(200).json({ success: true, mensaje: 'Respuesta correcta.' });
+  } catch (error) {
+    console.error("❌ Error en verificar-respuesta:", error);
+    res.status(500).json({ mensaje: 'Error al verificar la respuesta secreta.', error });
+  }
+});
+
 
 module.exports = router;
