@@ -210,15 +210,18 @@ router.post('/cambiar-contraseña', async (req, res) => {
     if (!email || !nuevaContraseña) {
       return res.status(400).json({ mensaje: 'Email y nueva contraseña son obligatorios.' });
     }
-    // Buscar al usuario
+    
+    // Buscar al usuario por correo
     const usuario = await Usuario.findOne({ email });
     if (!usuario) {
       return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
     }
+    
     // Hashear la nueva contraseña
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(nuevaContraseña, salt);
     usuario.contraseña = passwordHash;
+    
     // Guardar el usuario con la contraseña actualizada
     await usuario.save();
     res.status(200).json({ success: true, mensaje: 'Contraseña actualizada exitosamente.' });
@@ -227,6 +230,7 @@ router.post('/cambiar-contraseña', async (req, res) => {
     res.status(500).json({ mensaje: 'Error al actualizar la contraseña.', error });
   }
 });
+
 
 router.post('/verificar-respuesta', async (req, res) => {
   try {
