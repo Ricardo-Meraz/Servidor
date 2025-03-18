@@ -259,6 +259,24 @@ router.post('/verificar-respuesta', async (req, res) => {
     res.status(500).json({ mensaje: 'Error al verificar la respuesta secreta.', error });
   }
 });
+// Ruta para obtener un usuario por su ID
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ mensaje: 'ID inválido' });
+    }
+    const usuario = await Usuario.findById(id);
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+    res.status(200).json(usuario);
+  } catch (error) {
+    console.error("❌ Error al obtener usuario:", error);
+    res.status(500).json({ mensaje: 'Error en el servidor', error });
+  }
+});
+
 
 
 module.exports = router;
