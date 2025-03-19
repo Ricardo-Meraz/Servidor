@@ -19,6 +19,7 @@ const misionVisionRoutes = require('./rutas/RuthMisionVision'); // ✅ Ruta de M
 const historialAntecedentesRoutes = require("./rutas/RuthHistorial-Antecedentes"); // ✅ Nueva ruta
 const preguntaRecuperacionRoutes = require('./rutas/RuthPreguntaRecuperacion');
 const politicasRoutes = require('./rutas/RuthPoliticas'); // ✅ Ruta de Políticas
+const dispositivosRoutes = require('./rutas/RuthDispositivos');
 
 // Ruta de prueba
 app.get('/', (req, res) => {
@@ -32,6 +33,7 @@ app.use('/mision-vision', misionVisionRoutes);
 app.use('/historial-antecedentes', historialAntecedentesRoutes);
 app.use('/pregunta-recuperacion', preguntaRecuperacionRoutes);
 app.use('/politicas', politicasRoutes);
+app.use('/dispositivos', dispositivosRoutes);
 
 // Si estás corriendo localmente, inicia el servidor normalmente
 if (process.env.NODE_ENV !== 'production') {
