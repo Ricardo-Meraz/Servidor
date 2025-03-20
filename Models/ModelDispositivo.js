@@ -12,6 +12,6 @@ const DispositivoSchema = new mongoose.Schema({
   bomba: { type: Number, default: 0 },
   foco: { type: Number, default: 0 },
   ip: { type: String }
-}, { timestamps: true }); // Crea createdAt y updatedAt automáticamente
+}, { timestamps: true });
 
 module.exports = mongoose.model('Dispositivo', DispositivoSchema);
