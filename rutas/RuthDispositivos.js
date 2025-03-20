@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Dispositivo = require('../models/Dispositivo');
+const Dispositivo = require('../Models/ModelDispositivo');
 
 // GET /dispositivos/estado?email=...
 // Devuelve el dispositivo asociado al email dado
