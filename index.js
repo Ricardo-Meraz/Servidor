@@ -6,6 +6,9 @@ const conectarDB = require('./config/database'); // Asegúrate de que esta ruta 
 // Conectar a la base de datos
 conectarDB();
 
+// Importar y conectar MQTT
+const mqttClient = require('./mqtt/mqtt_server');
+
 const app = express();
 
 // Middlewares
