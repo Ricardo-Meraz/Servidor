@@ -47,4 +47,34 @@ router.post('/vincular', async (req, res) => {
   }
 });
 
+// POST /dispositivos/update
+// Recibe datos del ESP32 y actualiza el estado del dispositivo en MongoDB
+router.post('/update', async (req, res) => {
+  try {
+    const { email, foco, bomba, ventilador, temperatura, humedad, luz } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ mensaje: 'El email es obligatorio' });
+    }
+    
+    const dispositivo = await Dispositivo.findOne({ email });
+    if (!dispositivo) {
+      return res.status(404).json({ mensaje: 'Dispositivo no encontrado' });
+    }
+
+    // Actualiza los datos en la base de datos
+    dispositivo.foco = foco;
+    dispositivo.bomba = bomba;
+    dispositivo.ventilador = ventilador;
+    dispositivo.temperatura = temperatura;
+    dispositivo.humedad = humedad;
+    dispositivo.luz = luz;
+    await dispositivo.save();
+
+    res.json({ mensaje: 'Dispositivo actualizado correctamente', dispositivo });
+  } catch (err) {
+    res.status(500).json({ mensaje: 'Error en el servidor', error: err.message });
+  }
+});
+
 module.exports = router;
