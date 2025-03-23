@@ -9,7 +9,7 @@ const Usuario = require("../Models/ModelUsuarioinfo");
 const isAdmin = (req, res, next) => {
     // Supongamos que el middleware establece req.user con la información del usuario.
     // En este ejemplo, verificamos que req.user.role sea "admin".
-    if (req.user && req.user.role === "admin") {
+    if (req.user && req.user.role === "Admin") {
       return next();
     }
     return res.status(403).json({ error: "Acceso denegado. Solo administradores." });
