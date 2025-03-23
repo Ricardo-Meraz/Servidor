@@ -11,4 +11,4 @@ const conctUsuario = new mongoose.Schema(
   { collection: "contactanos" }
 );
 
-module.exports = mongoose.model("Usuario", conctUsuario);
+module.exports = mongoose.model("Usuarioinfo", conctUsuario);
