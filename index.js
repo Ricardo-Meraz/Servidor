@@ -22,6 +22,8 @@ const politicasRoutes = require('./rutas/RuthPoliticas'); // ✅ Ruta de Políti
 const dispositivosRoutes = require('./rutas/RuthDispositivos');
 const empresaRoutes = require('./rutas/RuthEmpresa');
 const usuarioinfoRoutes = require('./rutas/RuthUsuarioinfo');
+const faqRoutes = require("./rutas/RuthFaq");
+
 
 // Ruta de prueba
 app.get('/', (req, res) => {
@@ -37,7 +39,8 @@ app.use('/pregunta-recuperacion', preguntaRecuperacionRoutes);
 app.use('/politicas', politicasRoutes);
 app.use('/dispositivos', dispositivosRoutes);
 app.use('/empresa', empresaRoutes);      
-app.use('/usuarioinfo', usuarioinfoRoutes);  
+app.use('/usuarioinfo', usuarioinfoRoutes); 
+app.use("/faq", faqRoutes); 
 
 // Si estás corriendo localmente, inicia el servidor normalmente
 if (process.env.NODE_ENV !== 'production') {
