@@ -12,7 +12,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Importar rutas
+// Importar rutas existentes
 const productosRoutes = require('./rutas/RuthProductos');
 const usuariosRoutes = require('./rutas/RuthUsuarios');
 const misionVisionRoutes = require('./rutas/RuthMisionVision'); // ✅ Ruta de Misión y Visión
@@ -20,6 +20,8 @@ const historialAntecedentesRoutes = require("./rutas/RuthHistorial-Antecedentes"
 const preguntaRecuperacionRoutes = require('./rutas/RuthPreguntaRecuperacion');
 const politicasRoutes = require('./rutas/RuthPoliticas'); // ✅ Ruta de Políticas
 const dispositivosRoutes = require('./rutas/RuthDispositivos');
+const empresaRoutes = require('./rutas/RuthEmpresa');
+const usuarioinfoRoutes = require('./rutas/RuthUsuarioinfo');
 
 // Ruta de prueba
 app.get('/', (req, res) => {
@@ -34,6 +36,8 @@ app.use('/historial-antecedentes', historialAntecedentesRoutes);
 app.use('/pregunta-recuperacion', preguntaRecuperacionRoutes);
 app.use('/politicas', politicasRoutes);
 app.use('/dispositivos', dispositivosRoutes);
+app.use('/empresa', empresaRoutes);      
+app.use('/usuarioinfo', usuarioinfoRoutes);  
 
 // Si estás corriendo localmente, inicia el servidor normalmente
 if (process.env.NODE_ENV !== 'production') {
