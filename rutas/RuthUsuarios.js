@@ -266,7 +266,8 @@ router.get('/:id', async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ mensaje: 'ID inválido' });
     }
-    const usuario = await Usuario.findById(id);
+    const usuario = await Usuario.findById(id)
+      .populate('pregunta_recuperacion.pre_id'); // <-- IMPORTANTE
     if (!usuario) {
       return res.status(404).json({ mensaje: 'Usuario no encontrado' });
     }
@@ -276,6 +277,7 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ mensaje: 'Error en el servidor', error });
   }
 });
+
 
 
 
