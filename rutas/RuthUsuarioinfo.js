@@ -4,19 +4,9 @@ const router = express.Router();
 // Importamos el modelo de Usuario
 const Usuario = require("../Models/ModelUsuarioinfo");
 
-// Middleware de ejemplo para verificar que el usuario es admin.
-// En un caso real, usarías JWT o sesiones, pero aquí se usa un simple chequeo.
-const isAdmin = (req, res, next) => {
-    // Supongamos que el middleware establece req.user con la información del usuario.
-    // En este ejemplo, verificamos que req.user.role sea "admin".
-    if (req.user && req.user.role === "Admin") {
-      return next();
-    }
-    return res.status(403).json({ error: "Acceso denegado. Solo administradores." });
-  };
   
   // Ruta GET para que el admin vea todos los usuarios y sus mensajes.
-  router.get("/usuarios", isAdmin, async (req, res) => {
+  router.get("/usuarios", async (req, res) => {
     try {
       // Recupera todos los documentos del modelo de Usuario
       const usuarios = await Usuario.find();
