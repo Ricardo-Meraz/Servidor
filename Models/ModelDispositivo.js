@@ -4,7 +4,6 @@ const DispositivoSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
   email: { type: String, required: true },
   fecha: { type: String },
-  automatico: { type: Number, default: 0 },
   temperatura: { type: Number, default: 0 },
   humedad: { type: Number, default: 0 },
   luz: { type: Number, default: 0 },

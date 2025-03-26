@@ -3,6 +3,7 @@ const router = express.Router();
 const Dispositivo = require('../Models/ModelDispositivo');
 
 // GET /dispositivos/estado?email=...
+// Devuelve el dispositivo asociado al email dado
 router.get('/estado', async (req, res) => {
   try {
     const { email } = req.query;
@@ -22,6 +23,7 @@ router.get('/estado', async (req, res) => {
 });
 
 // POST /dispositivos/vincular
+// Vincula (o actualiza) un dispositivo usando los datos enviados en el body
 router.post('/vincular', async (req, res) => {
   try {
     const { nombre, email, ip } = req.body;
@@ -46,9 +48,10 @@ router.post('/vincular', async (req, res) => {
 });
 
 // POST /dispositivos/update
+// Recibe datos del ESP32 y actualiza el estado del dispositivo en MongoDB solo si la IP coincide
 router.post('/update', async (req, res) => {
   try {
-    const { email, foco, bomba, ventilador, temperatura, humedad, luz, ip, modo } = req.body;
+    const { email, foco, bomba, ventilador, temperatura, humedad, luz, ip } = req.body;
 
     if (!email || !ip) {
       return res.status(400).json({ mensaje: 'El email y la IP son obligatorios' });
@@ -65,14 +68,13 @@ router.post('/update', async (req, res) => {
       return res.status(403).json({ mensaje: 'IP no autorizada para actualizar datos' });
     }
 
-    // Actualizar los valores, incluyendo el modo
+    // Actualizar los valores sin usar "modo" ni "automatico"
     dispositivo.foco = foco;
     dispositivo.bomba = bomba;
     dispositivo.ventilador = ventilador;
     dispositivo.temperatura = temperatura;
     dispositivo.humedad = humedad;
     dispositivo.luz = luz;
-    dispositivo.modo = modo;
     dispositivo.updatedAt = new Date();
     await dispositivo.save();
 
