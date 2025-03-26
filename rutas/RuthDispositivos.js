@@ -48,27 +48,35 @@ router.post('/vincular', async (req, res) => {
 });
 
 // POST /dispositivos/update
-// Recibe datos del ESP32 y actualiza el estado del dispositivo en MongoDB
+// Recibe datos del ESP32 y actualiza el estado del dispositivo en MongoDB solo si la IP coincide
 router.post('/update', async (req, res) => {
   try {
-    const { email, foco, bomba, ventilador, temperatura, humedad, luz } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ mensaje: 'El email es obligatorio' });
+    const { email, foco, bomba, ventilador, temperatura, humedad, luz, ip, modo } = req.body;
+
+    if (!email || !ip) {
+      return res.status(400).json({ mensaje: 'El email y la IP son obligatorios' });
     }
-    
+
     const dispositivo = await Dispositivo.findOne({ email });
+
     if (!dispositivo) {
       return res.status(404).json({ mensaje: 'Dispositivo no encontrado' });
     }
 
-    // Actualiza los datos en la base de datos
+    // Verificar si la IP del ESP32 coincide con la almacenada en la base de datos
+    if (dispositivo.ip !== ip) {
+      return res.status(403).json({ mensaje: 'IP no autorizada para actualizar datos' });
+    }
+
+    // Actualizar los valores, incluyendo el modo
     dispositivo.foco = foco;
     dispositivo.bomba = bomba;
     dispositivo.ventilador = ventilador;
     dispositivo.temperatura = temperatura;
     dispositivo.humedad = humedad;
     dispositivo.luz = luz;
+    dispositivo.modo = modo;
+    dispositivo.updatedAt = new Date();
     await dispositivo.save();
 
     res.json({ mensaje: 'Dispositivo actualizado correctamente', dispositivo });
@@ -76,5 +84,6 @@ router.post('/update', async (req, res) => {
     res.status(500).json({ mensaje: 'Error en el servidor', error: err.message });
   }
 });
+
 
 module.exports = router;
