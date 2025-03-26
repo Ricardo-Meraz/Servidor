@@ -3,7 +3,6 @@ const router = express.Router();
 const Dispositivo = require('../Models/ModelDispositivo');
 
 // GET /dispositivos/estado?email=...
-// Devuelve el dispositivo asociado al email dado
 router.get('/estado', async (req, res) => {
   try {
     const { email } = req.query;
@@ -23,7 +22,6 @@ router.get('/estado', async (req, res) => {
 });
 
 // POST /dispositivos/vincular
-// Vincula (o actualiza) un dispositivo usando los datos enviados en el body
 router.post('/vincular', async (req, res) => {
   try {
     const { nombre, email, ip } = req.body;
@@ -48,7 +46,6 @@ router.post('/vincular', async (req, res) => {
 });
 
 // POST /dispositivos/update
-// Recibe datos del ESP32 y actualiza el estado del dispositivo en MongoDB solo si la IP coincide
 router.post('/update', async (req, res) => {
   try {
     const { email, foco, bomba, ventilador, temperatura, humedad, luz, ip, modo } = req.body;
@@ -63,7 +60,7 @@ router.post('/update', async (req, res) => {
       return res.status(404).json({ mensaje: 'Dispositivo no encontrado' });
     }
 
-    // Verificar si la IP del ESP32 coincide con la almacenada en la base de datos
+    // Verificar que la IP del dispositivo coincida
     if (dispositivo.ip !== ip) {
       return res.status(403).json({ mensaje: 'IP no autorizada para actualizar datos' });
     }
@@ -84,6 +81,5 @@ router.post('/update', async (req, res) => {
     res.status(500).json({ mensaje: 'Error en el servidor', error: err.message });
   }
 });
-
 
 module.exports = router;
