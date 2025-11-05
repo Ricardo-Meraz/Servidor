@@ -7,56 +7,34 @@ const Usuario = require('../Models/ModelUsuario');
 const router = express.Router();
 
 // ==========================
-// Ruta para registrar un usuario
+// Ruta para registrar un usuario (versión simplificada)
 // ==========================
 router.post('/registro', async (req, res) => {
   try {
     console.log("📥 Datos recibidos en el backend:", req.body);
 
-    const { 
-      nombre, 
-      apellidoP, 
-      apellidoM, 
-      telefono, 
-      email, 
-      password, 
-      sexo, 
-      edad, 
-      pregunta_recuperacion, 
-      respuesta_recuperacion 
-    } = req.body;
+    const { nombre, email, password } = req.body;
 
-    if (!nombre || !apellidoP || !telefono || !email || !password || 
-        !sexo || !edad || !pregunta_recuperacion || !respuesta_recuperacion) {
-      return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
+    // Validar que se envíen los campos mínimos
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ mensaje: 'Nombre, correo y contraseña son obligatorios' });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(pregunta_recuperacion)) {
-      return res.status(400).json({ mensaje: 'ID de pregunta inválido' });
-    }
-    const pre_id_ObjectId = new mongoose.Types.ObjectId(pregunta_recuperacion);
-
+    // Verificar si ya existe el usuario
     const usuarioExistente = await Usuario.findOne({ email });
     if (usuarioExistente) {
       return res.status(400).json({ mensaje: 'El correo ya está registrado' });
     }
 
+    // Hashear la contraseña antes de guardarla
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
+    // Crear nuevo usuario
     const nuevoUsuario = new Usuario({
       nombre,
-      apellidoP,
-      apellidoM,
-      telefono,
       email,
       contraseña: passwordHash,
-      sexo,
-      edad,
-      pregunta_recuperacion: {
-        pre_id: pre_id_ObjectId, 
-        respuesta: respuesta_recuperacion
-      },
       rol: "Cliente"
     });
 
@@ -68,6 +46,7 @@ router.post('/registro', async (req, res) => {
     res.status(500).json({ mensaje: 'Error en el servidor', error });
   }
 });
+
 
 // ==========================
 // Ruta para Login
