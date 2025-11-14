@@ -7,20 +7,18 @@ const Usuario = require('../Models/ModelUsuario');
 
 const router = express.Router();
 
-// ==================================================
-// FUNCIONES AUXILIARES
-// ==================================================
-
+// =========================
+// FUNCIÓN: Generar token
+// =========================
 function generarToken(id) {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'secretkey', {
     expiresIn: "1h"
   });
 }
 
-// ==================================================
-// 1. REGISTRO DE USUARIO
-// ==================================================
-
+// =========================
+// 1. REGISTRO
+// =========================
 router.post('/registro', async (req, res) => {
   try {
     const { nombre, email, password } = req.body;
@@ -54,10 +52,9 @@ router.post('/registro', async (req, res) => {
   }
 });
 
-// ==================================================
-// 2. LOGIN + BLOQUEO POR INTENTOS / PIN
-// ==================================================
-
+// =========================
+// 2. LOGIN + BLOQUEO
+// =========================
 router.post('/login', async (req, res) => {
   try {
     const { email, password, pin } = req.body;
@@ -109,10 +106,9 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// ==================================================
+// =========================
 // 3. GENERAR CÓDIGO DE VERIFICACIÓN
-// ==================================================
-
+// =========================
 router.post('/generar-code', async (req, res) => {
   try {
     const { email } = req.body;
@@ -130,15 +126,13 @@ router.post('/generar-code', async (req, res) => {
     res.status(200).json({ mensaje: "Código generado", code });
 
   } catch (error) {
-    console.error(error);
     res.status(500).json({ mensaje: "Error" });
   }
 });
 
-// ==================================================
-// 4. VERIFICAR CÓDIGO / ACTIVAR CUENTA
-// ==================================================
-
+// =========================
+// 4. VERIFICAR CÓDIGO
+// =========================
 router.post('/verificar-code', async (req, res) => {
   try {
     const { email, code } = req.body;
@@ -167,63 +161,9 @@ router.post('/verificar-code', async (req, res) => {
   }
 });
 
-// ==================================================
-// 5. OBTENER PREGUNTA SECRETA
-// ==================================================
-
-router.post('/recuperar-pregunta', async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    const usuario = await Usuario.findOne({ email })
-      .populate('pregunta_recuperacion.pre_id');
-
-    if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
-
-    if (!usuario.pregunta_recuperacion)
-      return res.status(404).json({ mensaje: "El usuario no tiene pregunta secreta" });
-
-    res.status(200).json({
-      pregunta: usuario.pregunta_recuperacion.pre_id.pregunta
-    });
-
-  } catch (error) {
-    res.status(500).json({ mensaje: "Error" });
-  }
-});
-
-// ==================================================
-// 6. VERIFICAR RESPUESTA SECRETA
-// ==================================================
-
-router.post('/verificar-respuesta', async (req, res) => {
-  try {
-    const { email, respuesta } = req.body;
-
-    const usuario = await Usuario.findOne({ email });
-    if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
-
-    if (!usuario.pregunta_recuperacion)
-      return res.status(400).json({ mensaje: "No hay pregunta secreta" });
-
-    if (
-      usuario.pregunta_recuperacion.respuesta.trim().toLowerCase() !==
-      respuesta.trim().toLowerCase()
-    ) {
-      return res.status(400).json({ mensaje: "Respuesta incorrecta" });
-    }
-
-    res.status(200).json({ mensaje: "Respuesta correcta" });
-
-  } catch (error) {
-    res.status(500).json({ mensaje: "Error" });
-  }
-});
-
-// ==================================================
-// 7. GENERAR TOKEN DE RECUPERACIÓN
-// ==================================================
-
+// =========================
+// 5. GENERAR TOKEN DE RECUPERACIÓN
+// =========================
 router.post('/generar-recovery', async (req, res) => {
   try {
     const { email } = req.body;
@@ -245,10 +185,9 @@ router.post('/generar-recovery', async (req, res) => {
   }
 });
 
-// ==================================================
-// 8. CAMBIAR CONTRASEÑA CON TOKEN
-// ==================================================
-
+// =========================
+// 6. CAMBIAR CONTRASEÑA
+// =========================
 router.post('/cambiar-contrasena', async (req, res) => {
   try {
     const { token, nueva } = req.body;
@@ -274,10 +213,9 @@ router.post('/cambiar-contrasena', async (req, res) => {
   }
 });
 
-// ==================================================
-// 9. LISTAR USUARIOS
-// ==================================================
-
+// =========================
+// 7. LISTAR USUARIOS
+// =========================
 router.get('/', async (req, res) => {
   try {
     const usuarios = await Usuario.find();
@@ -287,14 +225,12 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ==================================================
-// 10. OBTENER USUARIO POR ID
-// ==================================================
-
+// =========================
+// 8. OBTENER POR ID
+// =========================
 router.get('/:id', async (req, res) => {
   try {
-    const usuario = await Usuario.findById(req.params.id)
-      .populate('pregunta_recuperacion.pre_id');
+    const usuario = await Usuario.findById(req.params.id);
 
     if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
 
@@ -305,10 +241,9 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// ==================================================
-// 11. ACTUALIZAR USUARIO
-// ==================================================
-
+// =========================
+// 9. ACTUALIZAR
+// =========================
 router.put('/:id', async (req, res) => {
   try {
     const data = { ...req.body };
@@ -327,10 +262,9 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// ==================================================
-// 12. ELIMINAR USUARIO
-// ==================================================
-
+// =========================
+// 10. ELIMINAR
+// =========================
 router.delete('/:id', async (req, res) => {
   try {
     await Usuario.findByIdAndDelete(req.params.id);
