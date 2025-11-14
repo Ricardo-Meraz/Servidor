@@ -24,7 +24,6 @@ const misionVisionRoutes = require('./rutas/RuthMisionVision');
 const historialAntecedentesRoutes = require('./rutas/RuthHistorial-Antecedentes');
 const politicasRoutes = require('./rutas/RuthPoliticas');
 const dispositivosRoutes = require('./rutas/RuthDispositivos');
-const empresaRoutes = require('./rutas/RuthEmpresa');
 const usuarioinfoRoutes = require('./rutas/RuthUsuarioinfo');
 const faqRoutes = require("./rutas/RuthFaq");
 
@@ -48,7 +47,6 @@ app.use('/mision-vision', misionVisionRoutes);
 app.use('/historial-antecedentes', historialAntecedentesRoutes);
 app.use('/politicas', politicasRoutes);
 app.use('/dispositivos', dispositivosRoutes);
-app.use('/empresa', empresaRoutes);
 app.use('/usuarioinfo', usuarioinfoRoutes);
 app.use('/faq', faqRoutes);
 
