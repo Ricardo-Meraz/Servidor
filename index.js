@@ -31,7 +31,7 @@ const faqRoutes = require("./rutas/RuthFaq");
 // NUEVAS
 const benildeRoutes = require("./rutas/RuthBenilde");
 const erickRoutes = require("./rutas/RuthErick");
-const usuarioBaseRoutes = require("./rutas/RuthusuarioBase"); 
+const usuarioBaseRoutes = require("./rutas/RuthUsuarioBase"); 
 // OJO: aquí va con u minúscula, como se llama en el repo
 
 // =======================
