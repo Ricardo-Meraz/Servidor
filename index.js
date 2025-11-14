@@ -60,4 +60,14 @@ app.use('/usuario-base', usuarioBaseRoutes);
 // =======================
 //  SERVER LOCAL
 // =======================
-if (pro
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+    });
+}
+
+// =======================
+//  EXPORT PARA VERCEL
+// =======================
+module.exports = app;
