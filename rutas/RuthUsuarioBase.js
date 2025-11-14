@@ -1,6 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const UsuarioBase = require("../Models/UsuarioBase.js");
+const UsuarioBase = require("../Models/UsuarioBase"); // ← SOLUCIÓN REAL
 
 const router = express.Router();
 
@@ -34,9 +34,7 @@ router.post("/registro", async (req, res) => {
   }
 });
 
-// =========================
-// LOGIN BASE
-// =========================
+
 router.post("/login", async (req, res) => {
   try {
     const { email, contraseña } = req.body;
@@ -55,9 +53,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// =========================
-// LISTAR
-// =========================
 router.get("/", async (req, res) => {
   try {
     const usuarios = await UsuarioBase.find();
