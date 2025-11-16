@@ -6,16 +6,15 @@ const UsuarioBase = require("../Models/UsuarioBase");
 
 const router = express.Router();
 
-// =========================
-// REGISTRO BASE
-// =========================
+/* =========================
+   REGISTRO
+========================= */
 router.post("/registro", async (req, res) => {
   try {
     const { nombre, email, contraseña } = req.body;
 
-    if (!nombre || !email || !contraseña) {
+    if (!nombre || !email || !contraseña)
       return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
-    }
 
     const existe = await UsuarioBase.findOne({ email });
     if (existe) return res.status(400).json({ mensaje: "El email ya existe" });
@@ -25,7 +24,7 @@ router.post("/registro", async (req, res) => {
     const nuevo = await UsuarioBase.create({
       nombre,
       email,
-      contraseña: hash
+      contraseña: hash,
     });
 
     res.status(201).json({ mensaje: "Usuario registrado", usuario: nuevo });
@@ -36,9 +35,9 @@ router.post("/registro", async (req, res) => {
   }
 });
 
-// =========================
-// LOGIN
-// =========================
+/* =========================
+   LOGIN
+========================= */
 router.post("/login", async (req, res) => {
   try {
     const { email, contraseña } = req.body;
@@ -49,17 +48,16 @@ router.post("/login", async (req, res) => {
     const coincide = await bcrypt.compare(contraseña, usuario.contraseña);
     if (!coincide) return res.status(400).json({ mensaje: "Contraseña incorrecta" });
 
-    res.status(200).json({ mensaje: "Login exitoso", usuario });
+    res.json({ mensaje: "Login exitoso", usuario });
 
   } catch (error) {
-    console.error(error);
     res.status(500).json({ mensaje: "Error en el servidor" });
   }
 });
 
-// =========================
-// SOLICITAR RECUPERACIÓN
-// =========================
+/* =========================
+   ENVIAR CÓDIGO OTP
+========================= */
 router.post("/recuperar", async (req, res) => {
   try {
     const { email } = req.body;
@@ -67,66 +65,79 @@ router.post("/recuperar", async (req, res) => {
     const usuario = await UsuarioBase.findOne({ email });
     if (!usuario) return res.status(404).json({ mensaje: "Correo no registrado" });
 
-    // Crear token seguro
-    const token = crypto.randomBytes(32).toString("hex");
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
 
-    usuario.tokenRecuperacion = token;
-    usuario.expiraToken = Date.now() + 60 * 60 * 1000; // 1 hora
+    usuario.codigoOTP = codigo;
+    usuario.expiraOTP = Date.now() + 5 * 60 * 1000;
     await usuario.save();
 
-    // LINK hacia tu frontend
-    const link = `https://mi-app.vercel.app/reset-password/${token}`;
-
-    // Transportador Nodemailer
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        pass: process.env.EMAIL_PASS,
       }
     });
 
     await transporter.sendMail({
-      from: "Soporte <noreply@tuapp.com>",
-      to: usuario.email,
-      subject: "Recuperación de contraseña",
+      from: "Soporte <noreply@miapp.com>",
+      to: email,
+      subject: "Código de recuperación",
       html: `
         <h2>Recuperación de contraseña</h2>
-        <p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p>
-        <a href="${link}">${link}</a>
-        <p>Este enlace expira en 1 hora.</p>
+        <p>Tu código es:</p>
+        <h1>${codigo}</h1>
+        <p>Válido por 5 minutos.</p>
       `
     });
 
-    res.json({ mensaje: "Correo enviado. Revisa tu bandeja." });
+    res.json({ mensaje: "Código enviado al correo." });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ mensaje: "Error en el servidor" });
+    res.status(500).json({ mensaje: "Error al enviar OTP" });
   }
 });
 
-// =========================
-// RESTABLECER CONTRASEÑA
-// =========================
-router.post("/restablecer/:token", async (req, res) => {
+/* =========================
+   VERIFICAR OTP
+========================= */
+router.post("/verificar-otp", async (req, res) => {
   try {
-    const { token } = req.params;
-    const { nuevaContraseña } = req.body;
+    const { email, codigo } = req.body;
 
     const usuario = await UsuarioBase.findOne({
-      tokenRecuperacion: token,
-      expiraToken: { $gt: Date.now() }
+      email,
+      codigoOTP: codigo,
+      expiraOTP: { $gt: Date.now() }
     });
 
     if (!usuario)
-      return res.status(400).json({ mensaje: "Token inválido o expirado" });
+      return res.status(400).json({ mensaje: "Código inválido o expirado" });
+
+    res.json({ mensaje: "Código válido" });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: "Error al verificar OTP" });
+  }
+});
+
+/* =========================
+   RESTABLECER CONTRASEÑA
+========================= */
+router.post("/restablecer-otp", async (req, res) => {
+  try {
+    const { email, nuevaContraseña } = req.body;
+
+    const usuario = await UsuarioBase.findOne({ email });
+    if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
 
     const hash = await bcrypt.hash(nuevaContraseña, 10);
 
     usuario.contraseña = hash;
-    usuario.tokenRecuperacion = undefined;
-    usuario.expiraToken = undefined;
+    usuario.codigoOTP = undefined;
+    usuario.expiraOTP = undefined;
 
     await usuario.save();
 
@@ -134,13 +145,13 @@ router.post("/restablecer/:token", async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ mensaje: "Error en el servidor" });
+    res.status(500).json({ mensaje: "Error al actualizar la contraseña" });
   }
 });
 
-// =========================
-// LISTAR USUARIOS
-// =========================
+/* =========================
+   LISTAR USUARIOS
+========================= */
 router.get("/", async (req, res) => {
   try {
     const usuarios = await UsuarioBase.find();
