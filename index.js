@@ -1,22 +1,21 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const conectarDB = require('./config/database'); // Asegúrate de que esta ruta es correcta
+const conectarDB = require('./config/database');
 
-// Conectar a la base de datos
+// Conectar BD
 conectarDB();
 
 const app = express();
 
-// Middlewares
 app.use(express.json());
 app.use(cors());
 
-// Importar rutas
-const productosRoutes = require('./rutas/RuthProductos');
-const usuariosRoutes = require('./rutas/RuthUsuarios');
+// --- SOLO LAS RUTAS QUE USAS ---
+const benildeRoutes = require("./rutas/RuthBenilde");
+const erickRoutes = require("./rutas/RuthErick");
+const usuarioBaseRoutes = require("./rutas/RuthUsuarioBase");
 
-// Ruta de prueba
 app.get('/', (req, res) => {
     res.send('✅ Servidor funcionando correctamente en Vercel!');
 });
@@ -34,4 +33,17 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // **Corrección para Vercel**: exportar `app`
+app.use("/benilde", benildeRoutes);
+app.use("/erick", erickRoutes);
+app.use("/usuario-base", usuarioBaseRoutes);
+
+// SERVIDOR LOCAL
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`🚀 Servidor local en http://localhost:${PORT}`);
+    });
+}
+
+// EXPORT PARA VERCEL
 module.exports = app;

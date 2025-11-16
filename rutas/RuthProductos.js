@@ -13,6 +13,17 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Agregar un nuevo producto
+router.post('/', async (req, res) => {
+    try {
+        const nuevoProducto = new Producto(req.body);
+        await nuevoProducto.save();
+        res.status(201).json({ mensaje: 'Producto agregado exitosamente', producto: nuevoProducto });
+    } catch (error) {
+        res.status(500).json({ mensaje: 'Error al agregar el producto', error });
+    }
+});
+
 // Obtener un producto por ID
 router.get('/:id', async (req, res) => {
     try {
