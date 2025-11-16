@@ -86,8 +86,9 @@ router.post("/recuperar", async (req, res) => {
       }
     });
 
+    // CORREGIDO: el "from" DEBE SER IGUAL A EMAIL_USER
     await transporter.sendMail({
-      from: "Soporte <noreply@tuapp.com>",
+      from: process.env.EMAIL_USER,
       to: usuario.email,
       subject: "Recuperación de contraseña",
       html: `
