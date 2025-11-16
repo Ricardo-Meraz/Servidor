@@ -1,25 +1,52 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const CryptoJS = require("crypto-js");
 const nodemailer = require("nodemailer");
 const UsuarioBase = require("../Models/UsuarioBase");
 
 const router = express.Router();
 
-/* =========================
-   REGISTRO
-========================= */
+/* ============================================================
+    🔐 FUNCIÓN PARA DESCIFRAR AES (usa tu misma clave del frontend)
+=============================================================== */
+function desencriptarAES(textoEncriptado) {
+  try {
+    const clave = CryptoJS.enc.Utf8.parse("1234567890123456");
+    const iv = CryptoJS.enc.Utf8.parse("1234567890123456");
+
+    const bytes = CryptoJS.AES.decrypt(textoEncriptado, clave, {
+      iv: iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    });
+
+    return bytes.toString(CryptoJS.enc.Utf8);
+  } catch (error) {
+    console.log("❌ Error al descifrar AES:", error);
+    return null;
+  }
+}
+
+/* ============================================================
+    🟦 REGISTRO
+=============================================================== */
 router.post("/registro", async (req, res) => {
   try {
     const { nombre, email, contraseña } = req.body;
 
-    if (!nombre || !email || !contraseña)
+    if (!nombre || !email || !contraseña) {
       return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
+    }
 
     const existe = await UsuarioBase.findOne({ email });
     if (existe) return res.status(400).json({ mensaje: "El email ya existe" });
 
-    const hash = await bcrypt.hash(contraseña, 10);
+    // 🔓 DESCIFRAR contraseña AES antes de guardar
+    const passwordReal = desencriptarAES(contraseña);
+    if (!passwordReal) return res.status(500).json({ mensaje: "Error al desencriptar contraseña" });
+
+    const hash = await bcrypt.hash(passwordReal, 10);
 
     const nuevo = await UsuarioBase.create({
       nombre,
@@ -35,9 +62,9 @@ router.post("/registro", async (req, res) => {
   }
 });
 
-/* =========================
-   LOGIN
-========================= */
+/* ============================================================
+    🟦 LOGIN
+=============================================================== */
 router.post("/login", async (req, res) => {
   try {
     const { email, contraseña } = req.body;
@@ -45,19 +72,24 @@ router.post("/login", async (req, res) => {
     const usuario = await UsuarioBase.findOne({ email });
     if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
 
-    const coincide = await bcrypt.compare(contraseña, usuario.contraseña);
+    // 🔓 DESCIFRAR contraseña AES antes de comparar
+    const passwordReal = desencriptarAES(contraseña);
+    if (!passwordReal) return res.status(500).json({ mensaje: "Error al desencriptar contraseña" });
+
+    const coincide = await bcrypt.compare(passwordReal, usuario.contraseña);
     if (!coincide) return res.status(400).json({ mensaje: "Contraseña incorrecta" });
 
-    res.json({ mensaje: "Login exitoso", usuario });
+    res.status(200).json({ mensaje: "Login exitoso", usuario });
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({ mensaje: "Error en el servidor" });
   }
 });
 
-/* =========================
-   ENVIAR CÓDIGO OTP
-========================= */
+/* ============================================================
+    🟦 ENVIAR OTP
+=============================================================== */
 router.post("/recuperar", async (req, res) => {
   try {
     const { email } = req.body;
@@ -65,75 +97,66 @@ router.post("/recuperar", async (req, res) => {
     const usuario = await UsuarioBase.findOne({ email });
     if (!usuario) return res.status(404).json({ mensaje: "Correo no registrado" });
 
+    // Generar código OTP de 6 dígitos
     const codigo = Math.floor(100000 + Math.random() * 900000).toString();
 
     usuario.codigoOTP = codigo;
-    usuario.expiraOTP = Date.now() + 5 * 60 * 1000;
+    usuario.expiraOTP = Date.now() + 5 * 60 * 1000; // 5 min
     await usuario.save();
 
+    // Transportador
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
-      }
+      },
     });
 
     await transporter.sendMail({
       from: "Soporte <noreply@miapp.com>",
-      to: email,
+      to: usuario.email,
       subject: "Código de recuperación",
       html: `
         <h2>Recuperación de contraseña</h2>
         <p>Tu código es:</p>
-        <h1>${codigo}</h1>
-        <p>Válido por 5 minutos.</p>
-      `
+        <h1 style="font-size: 40px; letter-spacing: 5px;">${codigo}</h1>
+        <p>Expira en 5 minutos.</p>
+      `,
     });
 
-    res.json({ mensaje: "Código enviado al correo." });
+    res.json({ mensaje: "Código enviado a tu correo" });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ mensaje: "Error al enviar OTP" });
+    res.status(500).json({ mensaje: "Error al enviar código" });
   }
 });
 
-/* =========================
-   VERIFICAR OTP
-========================= */
+/* ============================================================
+    🟦 VERIFICAR OTP Y CAMBIAR CONTRASEÑA
+=============================================================== */
 router.post("/verificar-otp", async (req, res) => {
   try {
-    const { email, codigo } = req.body;
+    const { email, codigo, nuevaContraseña } = req.body;
 
     const usuario = await UsuarioBase.findOne({
       email,
       codigoOTP: codigo,
-      expiraOTP: { $gt: Date.now() }
+      expiraOTP: { $gt: Date.now() },
     });
 
-    if (!usuario)
+    if (!usuario) {
       return res.status(400).json({ mensaje: "Código inválido o expirado" });
+    }
 
-    res.json({ mensaje: "Código válido" });
+    // 🔓 DESCIFRAR nueva contraseña
+    const passwordNuevaReal = desencriptarAES(nuevaContraseña);
+    if (!passwordNuevaReal)
+      return res.status(500).json({ mensaje: "Error al desencriptar contraseña" });
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ mensaje: "Error al verificar OTP" });
-  }
-});
-
-/* =========================
-   RESTABLECER CONTRASEÑA
-========================= */
-router.post("/restablecer-otp", async (req, res) => {
-  try {
-    const { email, nuevaContraseña } = req.body;
-
-    const usuario = await UsuarioBase.findOne({ email });
-    if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
-
-    const hash = await bcrypt.hash(nuevaContraseña, 10);
+    // Guardar nueva contraseña
+    const hash = await bcrypt.hash(passwordNuevaReal, 10);
 
     usuario.contraseña = hash;
     usuario.codigoOTP = undefined;
@@ -144,14 +167,14 @@ router.post("/restablecer-otp", async (req, res) => {
     res.json({ mensaje: "Contraseña actualizada correctamente" });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ mensaje: "Error al actualizar la contraseña" });
+    console.error("ERR:", error);
+    res.status(500).json({ mensaje: "Error al actualizar contraseña" });
   }
 });
 
-/* =========================
-   LISTAR USUARIOS
-========================= */
+/* ============================================================
+    🟦 LISTAR USUARIOS (opcional)
+=============================================================== */
 router.get("/", async (req, res) => {
   try {
     const usuarios = await UsuarioBase.find();
