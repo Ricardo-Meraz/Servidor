@@ -11,7 +11,11 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// --- SOLO LAS RUTAS QUE USAS ---
+// === RUTAS DE PRODUCTOS Y USUARIOS ORIGINALES ===
+const productosRoutes = require('./rutas/RuthProductos');
+const usuariosRoutes = require('./rutas/RuthUsuarios');
+
+// === RUTAS DE BENILDE, ERICK Y USUARIO BASE ===
 const benildeRoutes = require("./rutas/RuthBenilde");
 const erickRoutes = require("./rutas/RuthErick");
 const usuarioBaseRoutes = require("./rutas/RuthUsuarioBase");
@@ -20,19 +24,9 @@ app.get('/', (req, res) => {
     res.send('✅ Servidor funcionando correctamente en Vercel!');
 });
 
-// Usar rutas
+// === USO DE TODAS LAS RUTAS ===
 app.use('/productos', productosRoutes);
 app.use('/usuarios', usuariosRoutes);
-
-// Si estás corriendo localmente, inicia el servidor normalmente
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
-        console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-    });
-}
-
-// **Corrección para Vercel**: exportar `app`
 app.use("/benilde", benildeRoutes);
 app.use("/erick", erickRoutes);
 app.use("/usuario-base", usuarioBaseRoutes);
