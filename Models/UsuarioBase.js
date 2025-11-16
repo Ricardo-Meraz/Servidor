@@ -5,10 +5,10 @@ const UsuarioBaseSchema = new mongoose.Schema({
   email: { type: String, unique: true, required: true },
   contraseña: { type: String, required: true },
 
-  // Campos para recuperación
-  tokenRecuperacion: { type: String },
-  expiraToken: { type: Date }
-  
+  // Campos para OTP
+  codigoOTP: { type: String },
+  expiraOTP: { type: Date }
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("UsuarioBase", UsuarioBaseSchema);
