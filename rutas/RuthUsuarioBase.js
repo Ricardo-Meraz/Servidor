@@ -36,6 +36,7 @@ router.post("/registro", async (req, res) => {
   }
 });
 
+
 // =========================
 // LOGIN
 // =========================
@@ -57,8 +58,9 @@ router.post("/login", async (req, res) => {
   }
 });
 
+
 // =========================
-// SOLICITAR RECUPERACIÓN
+// ENVIAR CÓDIGO OTP
 // =========================
 router.post("/recuperar", async (req, res) => {
   try {
@@ -67,67 +69,64 @@ router.post("/recuperar", async (req, res) => {
     const usuario = await UsuarioBase.findOne({ email });
     if (!usuario) return res.status(404).json({ mensaje: "Correo no registrado" });
 
-    // Crear token seguro
-    const token = crypto.randomBytes(32).toString("hex");
+    // Código OTP de 6 dígitos
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
 
-    usuario.tokenRecuperacion = token;
-    usuario.expiraToken = Date.now() + 60 * 60 * 1000; // 1 hora
+    usuario.codigoOTP = codigo;
+    usuario.expiraOTP = Date.now() + 5 * 60 * 1000; // 5 minutos
     await usuario.save();
-
-    // LINK hacia tu frontend
-    const link = `https://mi-app.vercel.app/reset-password/${token}`;
 
     // Transportador Nodemailer
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        pass: process.env.EMAIL_PASS,
       }
     });
 
-    // CORREGIDO: el "from" DEBE SER IGUAL A EMAIL_USER
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: "Soporte <noreply@miapp.com>",
       to: usuario.email,
-      subject: "Recuperación de contraseña",
+      subject: "Tu código de recuperación",
       html: `
         <h2>Recuperación de contraseña</h2>
-        <p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p>
-        <a href="${link}">${link}</a>
-        <p>Este enlace expira en 1 hora.</p>
+        <p>Tu código para recuperar tu cuenta es:</p>
+        <h1 style="font-size: 38px; letter-spacing: 6px;">${codigo}</h1>
+        <p>Este código expira en 5 minutos.</p>
       `
     });
 
-    res.json({ mensaje: "Correo enviado. Revisa tu bandeja." });
+    res.json({ mensaje: "Código enviado a tu correo." });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ mensaje: "Error en el servidor" });
+    res.status(500).json({ mensaje: "Error al enviar el código" });
   }
 });
 
+
 // =========================
-// RESTABLECER CONTRASEÑA
+// VERIFICAR OTP Y CAMBIAR CONTRASEÑA
 // =========================
-router.post("/restablecer/:token", async (req, res) => {
+router.post("/verificar-otp", async (req, res) => {
   try {
-    const { token } = req.params;
-    const { nuevaContraseña } = req.body;
+    const { email, codigo, nuevaContraseña } = req.body;
 
     const usuario = await UsuarioBase.findOne({
-      tokenRecuperacion: token,
-      expiraToken: { $gt: Date.now() }
+      email,
+      codigoOTP: codigo,
+      expiraOTP: { $gt: Date.now() }
     });
 
     if (!usuario)
-      return res.status(400).json({ mensaje: "Token inválido o expirado" });
+      return res.status(400).json({ mensaje: "Código inválido o expirado" });
 
     const hash = await bcrypt.hash(nuevaContraseña, 10);
 
     usuario.contraseña = hash;
-    usuario.tokenRecuperacion = undefined;
-    usuario.expiraToken = undefined;
+    usuario.codigoOTP = undefined;
+    usuario.expiraOTP = undefined;
 
     await usuario.save();
 
@@ -135,9 +134,10 @@ router.post("/restablecer/:token", async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ mensaje: "Error en el servidor" });
+    res.status(500).json({ mensaje: "Error al actualizar la contraseña" });
   }
 });
+
 
 // =========================
 // LISTAR USUARIOS
