@@ -21,7 +21,7 @@ const erickRoutes = require("./rutas/RuthErick");
 const usuarioBaseRoutes = require("./rutas/RuthUsuarioBase");
 
 // === NUEVA RUTA DEL PROYECTO PIN ===
-const pinRoutes = require("./rutas/RutasPin"); // ← AGREGADO
+const pinRoutes = require("./rutas/RutasPin");
 
 app.get('/', (req, res) => {
     res.send('✅ Servidor funcionando correctamente en Vercel!');
@@ -34,8 +34,8 @@ app.use("/benilde", benildeRoutes);
 app.use("/erick", erickRoutes);
 app.use("/usuario-base", usuarioBaseRoutes);
 
-// === MONTAJE DE LA NUEVA RUTA PIN ===
-app.use("/pin", pinRoutes); // ← AGREGADO
+// === RUTAS DEL PROYECTO PIN (CORRECTAS) ===
+app.use("/auth-pin", pinRoutes); // ← CORREGIDO
 
 // SERVIDOR LOCAL
 if (process.env.NODE_ENV !== 'production') {
