@@ -13,17 +13,14 @@ const UsuarioPinSchema = new mongoose.Schema(
       required: true,
     },
 
-    // --- PIN ---
-    pin: { type: String, default: null },  // PIN cifrado
+    // ---- PIN real que Mongo está usando ----
+    pin: { type: String, default: null }, // almacenará el hash
 
-    // --- BLOQUEO GENERAL (PIN + contraseña) ---
-    lockAttempts: { type: Number, default: 0 },  // Intentos fallidos totales
-    lockUntil: { type: Date, default: null },    // Bloqueado por 5 minutos
-    
-
+    // ---- Intentos y bloqueo ----
+    lockAttempts: { type: Number, default: 0 },
+    lockUntil: { type: Date, default: null },
   },
   { timestamps: true }
 );
 
 module.exports = mongoose.model("UsuarioPin", UsuarioPinSchema);
-

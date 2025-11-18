@@ -4,255 +4,169 @@ const UsuarioPin = require("../Models/UsuarioPin");
 
 const router = express.Router();
 
-// =========================
-// VALIDAR PIN (4–6 dígitos y reglas)
-// =========================
-function esSecuencial(pin) {
-  // 1234, 4567, 9876, 4321, etc.
-  let asc = true;
-  let desc = true;
-  for (let i = 1; i < pin.length; i++) {
-    const prev = parseInt(pin[i - 1]);
-    const cur = parseInt(pin[i]);
-    if (cur !== prev + 1) asc = false;
-    if (cur !== prev - 1) desc = false;
-  }
-  return asc || desc;
-}
-
-function todosIguales(pin) {
-  return pin.split("").every((d) => d === pin[0]);
-}
-
-function esPatronRepetido(pin) {
-  // 1212, 4545, 7878, etc.
-  if (pin.length % 2 !== 0) return false;
-  const mitad = pin.length / 2;
-  const p1 = pin.slice(0, mitad);
-  const p2 = pin.slice(mitad);
-  return p1 === p2;
-}
-
+/* =====================================================
+   📌 VALIDAR PIN (no secuencias, no repetidos, no patrones)
+===================================================== */
 function validarPin(pin) {
-  if (pin.length < 4 || pin.length > 6) {
-    return "El PIN debe tener entre 4 y 6 dígitos.";
-  }
-  if (!/^\d+$/.test(pin)) {
-    return "El PIN solo debe contener números.";
-  }
-  if (esSecuencial(pin)) {
-    return "El PIN no puede ser secuencial (ej. 1234 o 9876).";
-  }
-  if (todosIguales(pin)) {
-    return "El PIN no puede tener todos los dígitos iguales (ej. 1111).";
-  }
-  if (esPatronRepetido(pin)) {
-    return "El PIN no puede ser un patrón repetido (ej. 1212, 4545).";
-  }
-  return null;
+  if (!/^\d{4,6}$/.test(pin)) return false;
+
+  const asc = "0123456789";
+  const desc = "9876543210";
+
+  if (asc.includes(pin)) return false;
+  if (desc.includes(pin)) return false;
+
+  if (/^(\d)\1+$/.test(pin)) return false;
+
+  if (/^(\d\d)\1+$/.test(pin)) return false;
+
+  return true;
 }
 
-// =========================
-// REGISTRO (correo + contraseña normal)
-// =========================
+/* =====================================================
+   📌 REGISTRO
+===================================================== */
 router.post("/registro", async (req, res) => {
   try {
     const { email, contraseña } = req.body;
 
-    if (!email || !contraseña) {
-      return res
-        .status(400)
-        .json({ mensaje: "Correo y contraseña son obligatorios." });
-    }
-
     const existe = await UsuarioPin.findOne({ email });
     if (existe) {
-      return res.status(400).json({ mensaje: "Este correo ya está registrado." });
+      return res.status(400).json({ mensaje: "El correo ya está registrado" });
     }
 
     const hash = await bcrypt.hash(contraseña, 10);
 
-    const nuevo = await UsuarioPin.create({
+    await UsuarioPin.create({
       email,
       contraseña: hash,
-      pinHash: null,
-      pinIntentosFallidos: 0,
-      pinBloqueadoHasta: null,
+      pin: null,
+      lockAttempts: 0,
+      lockUntil: null,
     });
 
-    res.status(201).json({ mensaje: "Usuario registrado correctamente.", usuario: nuevo });
+    res.json({ mensaje: "Usuario registrado correctamente" });
   } catch (error) {
-    console.error("Error en /auth-pin/registro:", error);
-    res.status(500).json({ mensaje: "Error en el servidor." });
+    console.log(error);
+    res.status(500).json({ mensaje: "Error al registrar usuario" });
   }
 });
 
-// =========================
-// LOGIN por correo + contraseña
-// =========================
+/* =====================================================
+   📌 LOGIN NORMAL
+===================================================== */
 router.post("/login", async (req, res) => {
   try {
     const { email, contraseña } = req.body;
 
-    const usuario = await UsuarioPin.findOne({ email });
-    if (!usuario) {
-      return res.status(404).json({ mensaje: "Usuario no encontrado." });
-    }
+    const user = await UsuarioPin.findOne({ email });
+    if (!user) return res.status(404).json({ mensaje: "Usuario no encontrado" });
 
-    // Si la cuenta está bloqueada por PIN (bloqueo general)
-    if (usuario.pinBloqueadoHasta && usuario.pinBloqueadoHasta > new Date()) {
-      const restanteMs = usuario.pinBloqueadoHasta - new Date();
-      const restanteSeg = Math.ceil(restanteMs / 1000);
-      return res.status(403).json({
-        mensaje: "La cuenta está bloqueada por intentos fallidos.",
-        restante: restanteSeg,
-      });
-    }
-
-    const ok = await bcrypt.compare(contraseña, usuario.contraseña);
-    if (!ok) {
-      return res.status(400).json({ mensaje: "Credenciales incorrectas." });
+    const coincide = await bcrypt.compare(contraseña, user.contraseña);
+    if (!coincide) {
+      return res.status(400).json({ mensaje: "Contraseña incorrecta" });
     }
 
     res.json({
-      mensaje: "Login exitoso.",
+      mensaje: "Login exitoso",
       usuario: {
-        email: usuario.email,
-        tienePin: !!usuario.pinHash,
+        email: user.email,
+        tienePin: user.pin ? true : false,
       },
     });
   } catch (error) {
-    console.error("Error en /auth-pin/login:", error);
-    res.status(500).json({ mensaje: "Error en el servidor." });
+    console.log(error);
+    res.status(500).json({ mensaje: "Error en login" });
   }
 });
 
-// =========================
-// CONSULTAR SI TIENE PIN
-// =========================
-router.post("/tiene-pin", async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    const usuario = await UsuarioPin.findOne({ email });
-    if (!usuario) {
-      return res.status(404).json({ mensaje: "Usuario no encontrado.", tienePin: false });
-    }
-
-    const tienePin = !!usuario.pinHash;
-    res.json({ tienePin });
-
-  } catch (error) {
-    console.error("Error en /auth-pin/tiene-pin:", error);
-    res.status(500).json({ mensaje: "Error en el servidor." });
-  }
-});
-
-// =========================
-// CONFIGURAR / CAMBIAR PIN
-// =========================
+/* =====================================================
+   📌 CONFIGURAR PIN
+===================================================== */
 router.post("/configurar-pin", async (req, res) => {
   try {
     const { email, pin } = req.body;
 
-    const usuario = await UsuarioPin.findOne({ email });
-    if (!usuario) {
-      return res.status(404).json({ mensaje: "Usuario no encontrado." });
+    if (!validarPin(pin)) {
+      return res.status(400).json({
+        mensaje: "PIN inválido (no secuencias, no repetidos, 4-6 dígitos).",
+      });
     }
 
-    const errorPin = validarPin(pin);
-    if (errorPin) {
-      return res.status(400).json({ mensaje: errorPin });
-    }
+    const user = await UsuarioPin.findOne({ email });
+    if (!user) return res.status(404).json({ mensaje: "Usuario no encontrado" });
 
-    const pinHash = await bcrypt.hash(pin, 10);
+    user.pin = await bcrypt.hash(pin, 10);
+    user.lockAttempts = 0;
+    user.lockUntil = null;
 
-    usuario.pinHash = pinHash;
-    usuario.pinIntentosFallidos = 0;
-    usuario.pinBloqueadoHasta = null;
-    await usuario.save();
+    await user.save();
 
-    res.json({
-      mensaje: "PIN guardado correctamente.",
-      usuario: {
-        email: usuario.email,
-        tienePin: true,
-      },
-    });
+    res.json({ mensaje: "PIN configurado correctamente" });
   } catch (error) {
-    console.error("Error en /auth-pin/configurar-pin:", error);
-    res.status(500).json({ mensaje: "Error al configurar PIN." });
+    console.log(error);
+    res.status(500).json({ mensaje: "Error al configurar el PIN" });
   }
 });
 
-// =========================
-// LOGIN POR PIN
-// =========================
+/* =====================================================
+   📌 LOGIN POR PIN
+===================================================== */
 router.post("/login-pin", async (req, res) => {
   try {
     const { email, pin } = req.body;
 
-    const usuario = await UsuarioPin.findOne({ email });
-    if (!usuario) {
-      return res.status(404).json({ mensaje: "Usuario no encontrado." });
-    }
+    const user = await UsuarioPin.findOne({ email });
+    if (!user) return res.status(404).json({ mensaje: "Usuario no encontrado" });
 
-    // Bloqueo general (afecta PIN y correo)
-    if (usuario.pinBloqueadoHasta && usuario.pinBloqueadoHasta > new Date()) {
-      const restanteMs = usuario.pinBloqueadoHasta - new Date();
-      const restanteSeg = Math.ceil(restanteMs / 1000);
-      return res.status(403).json({
-        mensaje: "La cuenta está bloqueada por intentos fallidos.",
-        restante: restanteSeg,
-      });
-    }
-
-    // Si NO tiene PIN configurado
-    if (!usuario.pinHash) {
+    // ⛔ Si no tiene PIN
+    if (!user.pin) {
       return res.status(400).json({
-        mensaje: "Este usuario aún no tiene un PIN configurado.",
-        necesitaConfigPin: true,
+        mensaje: "Para iniciar sesión por PIN primero debes configurarlo.",
+        necesitaPin: true,
       });
     }
 
-    const esValido = await bcrypt.compare(pin, usuario.pinHash);
-    if (!esValido) {
-      usuario.pinIntentosFallidos = (usuario.pinIntentosFallidos || 0) + 1;
+    // ⛔ Verificar si está bloqueado
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const restante = Math.ceil((user.lockUntil - Date.now()) / 1000);
+      return res.status(403).json({
+        mensaje: "Cuenta bloqueada por intentos fallidos.",
+        restante,
+      });
+    }
 
-      if (usuario.pinIntentosFallidos >= 3) {
-        const ahora = new Date();
-        const cincoMinDespues = new Date(ahora.getTime() + 5 * 60 * 1000);
-        usuario.pinBloqueadoHasta = cincoMinDespues;
-        usuario.pinIntentosFallidos = 0;
-        await usuario.save();
+    // Verificar PIN
+    const coincide = await bcrypt.compare(pin, user.pin);
 
-        return res.status(403).json({
-          mensaje: "Se excedieron los intentos. Cuenta bloqueada por 5 minutos.",
-          restante: 5 * 60,
-        });
+    if (!coincide) {
+      user.lockAttempts += 1;
+
+      // Si llega a 3 → bloquear 5 min
+      if (user.lockAttempts >= 3) {
+        user.lockUntil = Date.now() + 5 * 60 * 1000;
+        user.lockAttempts = 0;
       }
 
-      await usuario.save();
-      return res.status(400).json({
-        mensaje: "PIN incorrecto.",
-        intentosRestantes: 3 - usuario.pinIntentosFallidos,
-      });
+      await user.save();
+      return res.status(400).json({ mensaje: "PIN incorrecto" });
     }
 
-    // Si el PIN es correcto
-    usuario.pinIntentosFallidos = 0;
-    await usuario.save();
+    // 🔥 PIN CORRECTO
+    user.lockAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
 
     res.json({
-      mensaje: "Login por PIN exitoso.",
+      mensaje: "Login por PIN exitoso",
       usuario: {
-        email: usuario.email,
-        tienePin: !!usuario.pinHash,
+        email: user.email,
+        tienePin: true,
       },
     });
   } catch (error) {
-    console.error("Error en /auth-pin/login-pin:", error);
-    res.status(500).json({ mensaje: "Error en el servidor." });
+    console.log(error);
+    res.status(500).json({ mensaje: "Error en login por PIN" });
   }
 });
 
